@@ -21,20 +21,22 @@ api.coinMStream(SYMBOL, (err, result) => {
                     //const time = new Date(data.E).toLocaleString();
                     if (markPrice < 0) {
                         markPrice = parseFloat(data.p);
-                        console.log('MARK:', markPrice);
-
                         const price = Math.round(markPrice * 1000) / 1000;
+                        console.log('MARK:', price);
+
                         // buildOrders(price, 0, (err, result) => {
                         //     if (err) console.error(err);
                         //     else console.log('Initialized GRIDs');
                         // });
 
-                        pairOrders(price, (err, result) => {
-                            if (err) console.error(err);
-                            else console.log('Initialized GRIDs');
-                        });
+                        // pairOrders(price, (err, result) => {
+                        //     if (err) console.error(err);
+                        //     else console.log('Initialized GRIDs');
+                        // });
                     }
                 }
+                break;
+            case 'bookTicker':
                 break;
             default:
                 console.log(data);
@@ -86,16 +88,14 @@ const pairOrders = (price, done) => {
 api.coinMEventsStream((err, result) => {
     if (err != null) console.error(err);
     else {
-        //let quantity = 0;
-        //let position = 0;
-
         const data = result.data;
         switch (data.e) {
             case 'ORDER_TRADE_UPDATE':
                 {
                     const o = data.o;
                     if (o.X == 'FILLED') {
-                        const price = Math.round(o.p * 1000) / 1000;
+                        const price = parseFloat(o.p);
+                        console.info(o.X, (o.S == BUY ? chalk.green('BUY') : chalk.red('SELL')), price);
                         // const cancelAll = (done) => api.cancelAll(SYMBOL, done);
                         // const placeOrders = (done) => buildOrders(entryPrice, quantity, done);
                         // async.series([cancelAll, placeOrders], (err, result) => {
@@ -126,33 +126,28 @@ api.coinMEventsStream((err, result) => {
             case 'ACCOUNT_UPDATE':
                 {
                     const time = new Date(data.E).toLocaleString();
-                    // console.log(time);
                     const P = data.a.P.filter(p => p.s.toLowerCase() == SYMBOL);
                     if (P.length) {
                         const p = P[0];
-                        //console.log(p);
 
                         const quantity = parseInt(p.pa);
                         const ep = Math.round(parseFloat(p.ep) * 1000) / 1000;
                         const entryPrice = (ep > 0 ? ep : markPrice);
 
-                        //quantity += (isBuy ? parseInt(o.q) : -parseInt(o.q));
-
                         const side = (quantity > 0 ? chalk.green('BUY') : (quantity < 0 ? chalk.red('SELL') : chalk.white('CLOSED')));
                         console.info('POSITION', side, entryPrice, quantity);
 
-                        const cancelAll = (done) => api.cancelAll(SYMBOL, done);
-                        const placeOrders = (done) => pairOrders(entryPrice, done);
-                        async.series([cancelAll, placeOrders], (err, result) => {
-                            if (err) console.error(err);
-                            else {
+                        // const cancelAll = (done) => api.cancelAll(SYMBOL, done);
+                        // const placeOrders = (done) => pairOrders(entryPrice, done);
+                        // async.series([cancelAll, placeOrders], (err, result) => {
+                        //     if (err) console.error(err);
+                        //     else {
 
-                            }
-                        });
+                        //     }
+                        // });
 
                     }
                 }
-                break;
             default:
             //console.log(data);
         }
